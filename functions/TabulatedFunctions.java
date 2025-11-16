@@ -52,6 +52,7 @@ public class TabulatedFunctions {
         }
     }
 
+
     public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> functionClass, double leftX, double rightX, double[] values) {
         try {
             return functionClass
@@ -153,6 +154,32 @@ public class TabulatedFunctions {
         return createTabulatedFunction(points);
     }
 
+    public static TabulatedFunction inputTabulatedFunction(Class<? extends TabulatedFunction> functionClass, InputStream in) throws IOException {
+
+        DataInputStream dataIn = new DataInputStream(in);
+
+        int pointsCount = dataIn.readInt();
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+
+        double prevX = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < pointsCount; ++i) {
+            double x = dataIn.readDouble();
+            double y = dataIn.readDouble();
+
+            if (i > 0 && x <= prevX + EPSILON) {
+                throw new IOException();
+            }
+
+            points[i] = new FunctionPoint(x, y);
+            prevX = x;
+        }
+
+        dataIn.close();
+
+        return createTabulatedFunction(functionClass, points);
+    }
+
     public static void writeTabulatedFunction(TabulatedFunction function, Writer out) throws IOException {
         BufferedWriter writer = new BufferedWriter(out);
 
@@ -191,5 +218,35 @@ public class TabulatedFunctions {
         }
 
         return createTabulatedFunction(points);
+    }
+
+    public static TabulatedFunction readTabulatedFunction(Class<? extends TabulatedFunction> functionClass, Reader in) throws IOException {
+
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+
+        tokenizer.nextToken();
+        int pointsCount = (int) tokenizer.nval;
+
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+
+        double prevX = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < pointsCount; ++i) {
+
+            tokenizer.nextToken();
+            double x = tokenizer.nval;
+
+            tokenizer.nextToken();
+            double y = tokenizer.nval;
+
+            if (i > 0 && x <= prevX + EPSILON) {
+                throw new IOException();
+            }
+
+            points[i] = new FunctionPoint(x, y);
+            prevX = x;
+        }
+
+        return createTabulatedFunction(functionClass, points);
     }
 }
